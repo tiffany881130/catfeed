@@ -281,7 +281,7 @@
     <div class="container">
         <div class="card">
             <div class="cat-emoji">🐱</div>
-            <h1>小卷餵食記錄餵食記錄<span class="sync-indicator" id="syncIndicator"></span></h1>
+            <h1>小卷餵食記錄<span class="sync-indicator" id="syncIndicator"></span></h1>
             
             <div class="config-notice" id="configNotice">
                 <strong>⚠️ 需要設定 Firebase</strong>
@@ -341,7 +341,7 @@
 
         // ⚠️ 重要：請將下方的 Firebase 設定替換成你自己的設定
         // 設定方式請參考 Firebase 設定說明文件
-        const firebaseConfig = {
+         const firebaseConfig = {
 			apiKey: "AIzaSyAzZYj-dz6Ic7VREP4g9u7bVZY05fv85lU",
 			authDomain: "catfeedreport.firebaseapp.com",
 			databaseURL: "https://catfeedreport-default-rtdb.asia-southeast1.firebasedatabase.app",
@@ -350,7 +350,7 @@
 			messagingSenderId: "589895141084",
 			appId: "1:589895141084:web:792cfdb33380c42cea1619"
 		};
-
+		
         // 檢查是否已設定
         const isConfigured = firebaseConfig.apiKey !== "YOUR_API_KEY";
         
@@ -515,7 +515,11 @@
         }
 
         function getDateString(date) {
-            return date.toISOString().split('T')[0];
+            // 使用本地時區
+            const year = date.getFullYear();
+            const month = String(date.getMonth() + 1).padStart(2, '0');
+            const day = String(date.getDate()).padStart(2, '0');
+            return `${year}-${month}-${day}`;
         }
 
         function formatDateDisplay(dateStr) {
@@ -524,9 +528,13 @@
             const yesterday = new Date(today);
             yesterday.setDate(yesterday.getDate() - 1);
             
-            if (getDateString(date) === getDateString(today)) {
+            const dateCompare = getDateString(date);
+            const todayCompare = getDateString(today);
+            const yesterdayCompare = getDateString(yesterday);
+            
+            if (dateCompare === todayCompare) {
                 return '今天';
-            } else if (getDateString(date) === getDateString(yesterday)) {
+            } else if (dateCompare === yesterdayCompare) {
                 return '昨天';
             } else {
                 return date.toLocaleDateString('zh-TW', { month: 'long', day: 'numeric' });
