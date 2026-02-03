@@ -1,0 +1,550 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>小卷餵食記錄</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Microsoft JhengHei", sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 600px;
+            margin: 0 auto;
+        }
+
+        .card {
+            background: white;
+            border-radius: 16px;
+            padding: 24px;
+            margin-bottom: 20px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+        }
+
+        h1 {
+            color: #667eea;
+            text-align: center;
+            margin-bottom: 8px;
+            font-size: 28px;
+        }
+
+        .cat-emoji {
+            text-align: center;
+            font-size: 48px;
+            margin-bottom: 20px;
+        }
+
+        .today-summary {
+            background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+            color: white;
+            padding: 20px;
+            border-radius: 12px;
+            margin-bottom: 24px;
+            text-align: center;
+        }
+
+        .today-summary h2 {
+            font-size: 18px;
+            margin-bottom: 12px;
+            opacity: 0.95;
+        }
+
+        .total-amount {
+            font-size: 48px;
+            font-weight: bold;
+            margin: 8px 0;
+        }
+
+        .limit-info {
+            font-size: 14px;
+            opacity: 0.9;
+        }
+
+        .warning {
+            background: linear-gradient(135deg, #ff6b6b 0%, #ee5a6f 100%);
+            animation: pulse 2s infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.85; }
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 8px;
+            color: #333;
+            font-weight: 500;
+        }
+
+        .input-group {
+            display: flex;
+            gap: 12px;
+            align-items: center;
+        }
+
+        input, select {
+            flex: 1;
+            padding: 12px;
+            border: 2px solid #e0e0e0;
+            border-radius: 8px;
+            font-size: 16px;
+            transition: border-color 0.3s;
+        }
+
+        input:focus, select:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+
+        .unit {
+            color: #666;
+            font-size: 14px;
+            white-space: nowrap;
+        }
+
+        button {
+            width: 100%;
+            padding: 16px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-size: 18px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+
+        button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(102, 126, 234, 0.4);
+        }
+
+        button:active {
+            transform: translateY(0);
+        }
+
+        button:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .history-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 16px;
+        }
+
+        .history-header h2 {
+            color: #333;
+            font-size: 20px;
+        }
+
+        .clear-btn {
+            padding: 8px 16px;
+            background: #ff6b6b;
+            color: white;
+            border: none;
+            border-radius: 6px;
+            font-size: 14px;
+            cursor: pointer;
+            width: auto;
+        }
+
+        .day-record {
+            border-bottom: 1px solid #f0f0f0;
+            padding: 16px 0;
+        }
+
+        .day-record:last-child {
+            border-bottom: none;
+        }
+
+        .day-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 8px;
+        }
+
+        .day-date {
+            font-weight: 600;
+            color: #333;
+        }
+
+        .day-total {
+            font-size: 20px;
+            font-weight: bold;
+            color: #667eea;
+        }
+
+        .day-total.over-limit {
+            color: #ff6b6b;
+        }
+
+        .feeding-list {
+            font-size: 14px;
+            color: #666;
+            margin-left: 12px;
+        }
+
+        .feeding-item {
+            margin: 4px 0;
+        }
+
+        .no-data {
+            text-align: center;
+            color: #999;
+            padding: 40px 20px;
+        }
+
+        .loading {
+            text-align: center;
+            color: #667eea;
+            padding: 20px;
+        }
+
+        .toast {
+            position: fixed;
+            bottom: 30px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: #333;
+            color: white;
+            padding: 12px 24px;
+            border-radius: 8px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+            opacity: 0;
+            transition: opacity 0.3s;
+            z-index: 1000;
+        }
+
+        .toast.show {
+            opacity: 1;
+        }
+
+        .sync-indicator {
+            display: inline-block;
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: #4CAF50;
+            margin-left: 8px;
+            animation: blink 2s infinite;
+        }
+
+        @keyframes blink {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.3; }
+        }
+
+        .config-notice {
+            background: #fff3cd;
+            border: 2px solid #ffc107;
+            border-radius: 8px;
+            padding: 16px;
+            margin-bottom: 20px;
+            color: #856404;
+        }
+
+        .config-notice strong {
+            display: block;
+            margin-bottom: 8px;
+        }
+
+        .config-notice code {
+            background: #fff;
+            padding: 2px 6px;
+            border-radius: 4px;
+            font-size: 13px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="card">
+            <div class="cat-emoji">🐱</div>
+            <h1>小卷餵食記錄餵食記錄<span class="sync-indicator" id="syncIndicator"></span></h1>
+            
+            <div class="config-notice" id="configNotice">
+                <strong>⚠️ 需要設定 Firebase</strong>
+                請按照說明文件設定 Firebase，並在下方填入你的設定資訊。
+            </div>
+
+            <div id="todaySummary" class="today-summary">
+                <h2>今日已食用</h2>
+                <div class="total-amount"><span id="todayTotal">0</span>克</div>
+                <div class="limit-info">每日限量 40 克</div>
+            </div>
+
+            <form id="feedingForm">
+                <div class="form-group">
+                    <label>飼料</label>
+                    <div class="input-group">
+                        <input type="number" id="dryFood" min="0" step="1" placeholder="請輸入克數">
+                        <span class="unit">克</span>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label>罐頭（半罐 = 10克）</label>
+                    <div class="input-group">
+                        <select id="wetFood">
+                            <option value="0">無</option>
+                            <option value="5">1/4 罐（5克）</option>
+                            <option value="10">半罐（10克）</option>
+                            <option value="15">3/4 罐（15克）</option>
+                            <option value="20">一罐（20克）</option>
+                        </select>
+                    </div>
+                </div>
+
+                <button type="submit" id="submitBtn">記錄餵食</button>
+            </form>
+        </div>
+
+        <div class="card">
+            <div class="history-header">
+                <h2>近七日記錄</h2>
+                <button class="clear-btn" onclick="clearAllData()">清除資料</button>
+            </div>
+            <div id="historyList">
+                <div class="loading">載入中...</div>
+            </div>
+        </div>
+    </div>
+
+    <div id="toast" class="toast"></div>
+
+    <!-- Firebase SDK -->
+    <script type="module">
+        // Import Firebase SDK
+        import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js';
+        import { getDatabase, ref, push, set, onValue, remove } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-database.js';
+
+        // ⚠️ 重要：請將下方的 Firebase 設定替換成你自己的設定
+        // 設定方式請參考 Firebase 設定說明文件
+        const firebaseConfig = {
+			apiKey: "AIzaSyAzZYj-dz6Ic7VREP4g9u7bVZY05fv85lU",
+			authDomain: "catfeedreport.firebaseapp.com",
+			databaseURL: "https://catfeedreport-default-rtdb.asia-southeast1.firebasedatabase.app",
+			projectId: "catfeedreport",
+			storageBucket: "catfeedreport.firebasestorage.app",
+			messagingSenderId: "589895141084",
+			appId: "1:589895141084:web:792cfdb33380c42cea1619"
+		};
+
+        // 檢查是否已設定
+        const isConfigured = firebaseConfig.apiKey !== "YOUR_API_KEY";
+        
+        if (!isConfigured) {
+            document.getElementById('submitBtn').disabled = true;
+            document.getElementById('historyList').innerHTML = '<div class="no-data">請先設定 Firebase</div>';
+        } else {
+            document.getElementById('configNotice').style.display = 'none';
+        }
+
+        // 初始化 Firebase
+        const app = initializeApp(firebaseConfig);
+        const database = getDatabase(app);
+        const feedingsRef = ref(database, 'feedings');
+
+        const DAILY_LIMIT = 40;
+        let allFeedings = {};
+
+        // 監聽資料變化（即時同步）
+        onValue(feedingsRef, (snapshot) => {
+            allFeedings = snapshot.val() || {};
+            updateDisplay();
+            
+            // 顯示同步指示器
+            const indicator = document.getElementById('syncIndicator');
+            indicator.style.animation = 'none';
+            setTimeout(() => {
+                indicator.style.animation = 'blink 2s infinite';
+            }, 10);
+        });
+
+        // 表單提交
+        document.getElementById('feedingForm').addEventListener('submit', async function(e) {
+            e.preventDefault();
+            
+            const dryFood = parseFloat(document.getElementById('dryFood').value) || 0;
+            const wetFood = parseFloat(document.getElementById('wetFood').value) || 0;
+            
+            if (dryFood === 0 && wetFood === 0) {
+                showToast('請至少輸入一項食物份量');
+                return;
+            }
+
+            try {
+                await addFeeding(dryFood, wetFood);
+                
+                // 清空表單
+                document.getElementById('dryFood').value = '';
+                document.getElementById('wetFood').value = '0';
+                
+                showToast('記錄成功！');
+            } catch (error) {
+                console.error('Error adding feeding:', error);
+                showToast('記錄失敗，請稍後再試');
+            }
+        });
+
+        async function addFeeding(dryFood, wetFood) {
+            const now = new Date();
+            const dateStr = getDateString(now);
+            const timeStr = now.toLocaleTimeString('zh-TW', { hour: '2-digit', minute: '2-digit' });
+            
+            const newFeedingRef = push(ref(database, `feedings/${dateStr}`));
+            await set(newFeedingRef, {
+                time: timeStr,
+                timestamp: now.getTime(),
+                dryFood: dryFood,
+                wetFood: wetFood,
+                total: dryFood + wetFood
+            });
+        }
+
+        function updateDisplay() {
+            updateTodaySummary();
+            updateHistory();
+        }
+
+        function updateTodaySummary() {
+            const today = getDateString(new Date());
+            const todayData = allFeedings[today] || {};
+            
+            const totalToday = Object.values(todayData).reduce((sum, item) => sum + (item.total || 0), 0);
+            
+            document.getElementById('todayTotal').textContent = totalToday;
+            
+            const summaryDiv = document.getElementById('todaySummary');
+            if (totalToday > DAILY_LIMIT) {
+                summaryDiv.classList.add('warning');
+            } else {
+                summaryDiv.classList.remove('warning');
+            }
+        }
+
+        function updateHistory() {
+            const historyList = document.getElementById('historyList');
+            
+            // 獲取近七天的日期
+            const dates = [];
+            for (let i = 0; i < 7; i++) {
+                const date = new Date();
+                date.setDate(date.getDate() - i);
+                dates.push(getDateString(date));
+            }
+            
+            // 檢查是否有資料
+            const hasData = dates.some(date => allFeedings[date] && Object.keys(allFeedings[date]).length > 0);
+            
+            if (!hasData) {
+                historyList.innerHTML = '<div class="no-data">尚無餵食記錄</div>';
+                return;
+            }
+            
+            let html = '';
+            dates.forEach(dateStr => {
+                const dayData = allFeedings[dateStr];
+                if (!dayData || Object.keys(dayData).length === 0) return;
+                
+                // 轉換成陣列並按時間排序
+                const feedingArray = Object.entries(dayData).map(([key, value]) => ({
+                    key,
+                    ...value
+                })).sort((a, b) => (b.timestamp || 0) - (a.timestamp || 0));
+                
+                const dayTotal = feedingArray.reduce((sum, item) => sum + (item.total || 0), 0);
+                const isOverLimit = dayTotal > DAILY_LIMIT;
+                
+                html += `
+                    <div class="day-record">
+                        <div class="day-header">
+                            <span class="day-date">${formatDateDisplay(dateStr)}</span>
+                            <span class="day-total ${isOverLimit ? 'over-limit' : ''}">${dayTotal}克</span>
+                        </div>
+                        <div class="feeding-list">
+                `;
+                
+                feedingArray.forEach(item => {
+                    const parts = [];
+                    if (item.dryFood > 0) parts.push(`飼料${item.dryFood}克`);
+                    if (item.wetFood > 0) parts.push(`罐頭${item.wetFood}克`);
+                    html += `<div class="feeding-item">${item.time} - ${parts.join('、')}</div>`;
+                });
+                
+                html += `
+                        </div>
+                    </div>
+                `;
+            });
+            
+            historyList.innerHTML = html;
+        }
+
+        async function clearAllData() {
+            if (confirm('確定要清除所有餵食記錄嗎？此動作無法復原！')) {
+                try {
+                    await remove(feedingsRef);
+                    showToast('資料已清除');
+                } catch (error) {
+                    console.error('Error clearing data:', error);
+                    showToast('清除失敗，請稍後再試');
+                }
+            }
+        }
+
+        function getDateString(date) {
+            return date.toISOString().split('T')[0];
+        }
+
+        function formatDateDisplay(dateStr) {
+            const date = new Date(dateStr + 'T00:00:00');
+            const today = new Date();
+            const yesterday = new Date(today);
+            yesterday.setDate(yesterday.getDate() - 1);
+            
+            if (getDateString(date) === getDateString(today)) {
+                return '今天';
+            } else if (getDateString(date) === getDateString(yesterday)) {
+                return '昨天';
+            } else {
+                return date.toLocaleDateString('zh-TW', { month: 'long', day: 'numeric' });
+            }
+        }
+
+        function showToast(message) {
+            const toast = document.getElementById('toast');
+            toast.textContent = message;
+            toast.classList.add('show');
+            
+            setTimeout(() => {
+                toast.classList.remove('show');
+            }, 2000);
+        }
+
+        // 將 clearAllData 設為全域函數
+        window.clearAllData = clearAllData;
+    </script>
+</body>
+</html>
