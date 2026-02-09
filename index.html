@@ -3,7 +3,20 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="robots" content="noindex, nofollow">
     <title>小卷餵食記錄</title>
+    
+    <!-- PWA Manifest -->
+    <link rel="manifest" href="manifest.json">
+    
+    <!-- iOS 支援 -->
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="小卷餵食">
+    
+    <!-- 主題色 -->
+    <meta name="theme-color" content="#667eea">
+    
     <style>
         * {
             margin: 0;
@@ -31,6 +44,99 @@
             box-shadow: 0 10px 30px rgba(0,0,0,0.2);
         }
 
+        /* 登入畫面 */
+        .login-screen {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            min-height: 100vh;
+        }
+
+        .login-card {
+            background: white;
+            border-radius: 16px;
+            padding: 40px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+            max-width: 400px;
+            width: 100%;
+        }
+
+        .login-emoji {
+            text-align: center;
+            font-size: 64px;
+            margin-bottom: 20px;
+        }
+
+        .login-title {
+            text-align: center;
+            color: #667eea;
+            font-size: 24px;
+            margin-bottom: 30px;
+        }
+
+        .login-input {
+            width: 100%;
+            padding: 16px;
+            border: 2px solid #e0e0e0;
+            border-radius: 8px;
+            font-size: 16px;
+            margin-bottom: 16px;
+            transition: border-color 0.3s;
+        }
+
+        .login-input:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+
+        .login-btn {
+            width: 100%;
+            padding: 16px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-size: 18px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+
+        .login-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(102, 126, 234, 0.4);
+        }
+
+        .login-btn:active {
+            transform: translateY(0);
+        }
+
+        .login-btn:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+        }
+
+        .error-message {
+            color: #ff6b6b;
+            text-align: center;
+            margin-top: 12px;
+            font-size: 14px;
+            display: none;
+        }
+
+        .error-message.show {
+            display: block;
+        }
+
+        /* 主應用程式 */
+        .app-container {
+            display: none;
+        }
+
+        .app-container.show {
+            display: block;
+        }
+
         h1 {
             color: #667eea;
             text-align: center;
@@ -41,6 +147,13 @@
         .cat-emoji {
             text-align: center;
             font-size: 48px;
+            margin-bottom: 20px;
+        }
+
+        .user-info {
+            text-align: center;
+            color: #666;
+            font-size: 14px;
             margin-bottom: 20px;
         }
 
@@ -157,9 +270,25 @@
             font-size: 20px;
         }
 
+        .action-buttons {
+            display: flex;
+            gap: 8px;
+        }
+
         .clear-btn {
             padding: 8px 16px;
             background: #ff6b6b;
+            color: white;
+            border: none;
+            border-radius: 6px;
+            font-size: 14px;
+            cursor: pointer;
+            width: auto;
+        }
+
+        .logout-btn {
+            padding: 8px 16px;
+            background: #95a5a6;
             color: white;
             border: none;
             border-radius: 6px;
@@ -254,81 +383,88 @@
             0%, 100% { opacity: 1; }
             50% { opacity: 0.3; }
         }
-
-        .config-notice {
-            background: #fff3cd;
-            border: 2px solid #ffc107;
-            border-radius: 8px;
-            padding: 16px;
-            margin-bottom: 20px;
-            color: #856404;
-        }
-
-        .config-notice strong {
-            display: block;
-            margin-bottom: 8px;
-        }
-
-        .config-notice code {
-            background: #fff;
-            padding: 2px 6px;
-            border-radius: 4px;
-            font-size: 13px;
-        }
     </style>
 </head>
 <body>
-    <div class="container">
-        <div class="card">
-            <div class="cat-emoji">
-    		<img src="https://tiffany881130.github.io/catfeed/photo.jpg" alt="小卷" style="width: 80px; height: 80px; border-radius: 50%; object-fit: cover; box-shadow: 0 4px 8px rgba(0,0,0,0.2);">
-			</div>
-            <h1>小卷餵食記錄<span class="sync-indicator" id="syncIndicator"></span></h1>
-            
-            <div class="config-notice" id="configNotice">
-                <strong>⚠️ 需要設定 Firebase</strong>
-                請按照說明文件設定 Firebase，並在下方填入你的設定資訊。
-            </div>
-
-            <div id="todaySummary" class="today-summary">
-                <h2>今日已食用</h2>
-                <div class="total-amount"><span id="todayTotal">0</span>克</div>
-                <div class="limit-info">每日限量 40 克</div>
-            </div>
-
-            <form id="feedingForm">
-                <div class="form-group">
-                    <label>飼料</label>
-                    <div class="input-group">
-                        <input type="number" id="dryFood" min="0" step="1" placeholder="請輸入克數">
-                        <span class="unit">克</span>
-                    </div>
-                </div>
-
-                <div class="form-group">
-                    <label>罐頭（半罐 = 10克）</label>
-                    <div class="input-group">
-                        <select id="wetFood">
-                            <option value="0">無</option>
-                            <option value="5">1/4 罐（5克）</option>
-                            <option value="10">半罐（10克）</option>
-                            <option value="15">3/4 罐（15克）</option>
-                            <option value="20">一罐（20克）</option>
-                        </select>
-                    </div>
-                </div>
-
-                <button type="submit" id="submitBtn">記錄餵食</button>
+    <!-- 登入畫面 -->
+    <div class="login-screen" id="loginScreen">
+        <div class="login-card">
+            <img src="https://tiffany881130.github.io/catfeed/photo.jpg" alt="小卷" style="width: 80px; height: 80px; border-radius: 50%; object-fit: cover; box-shadow: 0 4px 8px rgba(0,0,0,0.2);">
+			<h1 class="login-title">小卷餵食記錄</h1>
+            <form id="loginForm">
+                <input 
+                    type="email" 
+                    id="emailInput" 
+                    class="login-input" 
+                    placeholder="帳號"
+                    autocomplete="username"
+                    required
+                >
+                <input 
+                    type="password" 
+                    id="passwordInput" 
+                    class="login-input" 
+                    placeholder="密碼"
+                    autocomplete="current-password"
+                    required
+                >
+                <button type="submit" class="login-btn" id="loginBtn">登入</button>
+                <div class="error-message" id="errorMessage">帳號或密碼錯誤</div>
             </form>
         </div>
+    </div>
 
-        <div class="card">
-            <div class="history-header">
-                <h2>近七日記錄</h2>
-                <button class="clear-btn" onclick="clearAllData()">清除資料</button>
+    <!-- 主應用程式 -->
+    <div class="app-container" id="appContainer">
+        <div class="container">
+            <div class="card">
+                <img src="https://tiffany881130.github.io/catfeed/photo.jpg" alt="小卷" style="width: 80px; height: 80px; border-radius: 50%; object-fit: cover; box-shadow: 0 4px 8px rgba(0,0,0,0.2);">
+			<h1>小卷餵食記錄<span class="sync-indicator" id="syncIndicator"></span></h1>
+                <div class="user-info" id="userInfo">載入中...</div>
+                
+                <div id="todaySummary" class="today-summary">
+                    <h2>今日已食用</h2>
+                    <div class="total-amount"><span id="todayTotal">0</span>克</div>
+                    <div class="limit-info">每日限量 40 克</div>
+                </div>
+
+                <form id="feedingForm">
+                    <div class="form-group">
+                        <label>飼料</label>
+                        <div class="input-group">
+                            <input type="number" id="dryFood" min="0" max="50" step="1" placeholder="請輸入克數">
+                            <span class="unit">克</span>
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label>罐頭（半罐 = 10克）</label>
+                        <div class="input-group">
+                            <select id="wetFood">
+                                <option value="0">無</option>
+                                <option value="5">1/4 罐（5克）</option>
+                                <option value="10">半罐（10克）</option>
+                                <option value="15">3/4 罐（15克）</option>
+                                <option value="20">一罐（20克）</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <button type="submit" id="submitBtn">記錄餵食</button>
+                </form>
             </div>
-            <div id="historyList">
-                <div class="loading">載入中...</div>
+
+            <div class="card">
+                <div class="history-header">
+                    <h2>近七日記錄</h2>
+                    <div class="action-buttons">
+                        <button class="clear-btn" onclick="clearAllData()">清除資料</button>
+                        <button class="logout-btn" onclick="logout()">登出</button>
+                    </div>
+                </div>
+                <div id="historyList">
+                    <div class="loading">載入中...</div>
+                </div>
             </div>
         </div>
     </div>
@@ -337,13 +473,12 @@
 
     <!-- Firebase SDK -->
     <script type="module">
-        // Import Firebase SDK
         import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js';
+        import { getAuth, signInWithEmailAndPassword, onAuthStateChanged, signOut, setPersistence, browserLocalPersistence } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js';
         import { getDatabase, ref, push, set, onValue, remove } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-database.js';
 
         // ⚠️ 重要：請將下方的 Firebase 設定替換成你自己的設定
-        // 設定方式請參考 Firebase 設定說明文件
-         const firebaseConfig = {
+        const firebaseConfig = {
 			apiKey: "AIzaSyAzZYj-dz6Ic7VREP4g9u7bVZY05fv85lU",
 			authDomain: "catfeedreport.firebaseapp.com",
 			databaseURL: "https://catfeedreport-default-rtdb.asia-southeast1.firebasedatabase.app",
@@ -352,68 +487,139 @@
 			messagingSenderId: "589895141084",
 			appId: "1:589895141084:web:792cfdb33380c42cea1619"
 		};
-		
-        // 檢查是否已設定
-        const isConfigured = firebaseConfig.apiKey !== "YOUR_API_KEY";
-        
-        if (!isConfigured) {
-            document.getElementById('submitBtn').disabled = true;
-            document.getElementById('historyList').innerHTML = '<div class="no-data">請先設定 Firebase</div>';
-        } else {
-            document.getElementById('configNotice').style.display = 'none';
-        }
 
-        // 初始化 Firebase
+        // ⚠️ 管理員密碼：用來清除資料（經過簡單混淆）
+        // 使用 admin-password-generator.html 來產生這個加密密碼
+        const ADMIN_HASH = "46414e47333034303432"; // 預設是 "admin8899"，記得改成你的密碼
+
         const app = initializeApp(firebaseConfig);
+        const auth = getAuth(app);
         const database = getDatabase(app);
         const feedingsRef = ref(database, 'feedings');
 
         const DAILY_LIMIT = 40;
         let allFeedings = {};
+        let currentUser = null;
 
-        // 監聽資料變化（即時同步）
-        onValue(feedingsRef, (snapshot) => {
-            allFeedings = snapshot.val() || {};
-            updateDisplay();
-            
-            // 顯示同步指示器
-            const indicator = document.getElementById('syncIndicator');
-            indicator.style.animation = 'none';
-            setTimeout(() => {
-                indicator.style.animation = 'blink 2s infinite';
-            }, 10);
+        // 設定持久性登入（30天）
+        setPersistence(auth, browserLocalPersistence);
+
+        // 檢查登入狀態
+        onAuthStateChanged(auth, (user) => {
+            if (user) {
+                currentUser = user;
+                showApp();
+            } else {
+                showLogin();
+            }
         });
 
-        // 表單提交
-        document.getElementById('feedingForm').addEventListener('submit', async function(e) {
+        // 登入表單處理
+        document.getElementById('loginForm').addEventListener('submit', async function(e) {
             e.preventDefault();
             
-            const dryFood = parseFloat(document.getElementById('dryFood').value) || 0;
-            const wetFood = parseFloat(document.getElementById('wetFood').value) || 0;
+            const email = document.getElementById('emailInput').value;
+            const password = document.getElementById('passwordInput').value;
+            const loginBtn = document.getElementById('loginBtn');
             
-            if (dryFood === 0 && wetFood === 0) {
-                showToast('請至少輸入一項食物份量');
-                return;
-            }
-
+            loginBtn.disabled = true;
+            loginBtn.textContent = '登入中...';
+            
             try {
-                await addFeeding(dryFood, wetFood);
-                
-                // 清空表單
-                document.getElementById('dryFood').value = '';
-                document.getElementById('wetFood').value = '0';
-                
-                showToast('記錄成功！');
+                await signInWithEmailAndPassword(auth, email, password);
+                // 登入成功會自動觸發 onAuthStateChanged
             } catch (error) {
-                console.error('Error adding feeding:', error);
-                showToast('記錄失敗，請稍後再試');
+                console.error('Login error:', error);
+                document.getElementById('errorMessage').classList.add('show');
+                document.getElementById('passwordInput').value = '';
+                
+                setTimeout(() => {
+                    document.getElementById('errorMessage').classList.remove('show');
+                }, 3000);
+                
+                loginBtn.disabled = false;
+                loginBtn.textContent = '登入';
             }
         });
+
+        function showLogin() {
+            document.getElementById('loginScreen').style.display = 'flex';
+            document.getElementById('appContainer').classList.remove('show');
+        }
+
+        function showApp() {
+            document.getElementById('loginScreen').style.display = 'none';
+            document.getElementById('appContainer').classList.add('show');
+            
+            // 顯示用戶資訊
+            const userEmail = currentUser.email;
+            const userName = userEmail.split('@')[0]; // 取 @ 前面的部分
+            document.getElementById('userInfo').textContent = `👤 ${userName}`;
+            
+            initializeApp();
+        }
+
+        async function logout() {
+            if (confirm('確定要登出嗎？')) {
+                try {
+                    await signOut(auth);
+                    showToast('已登出');
+                } catch (error) {
+                    console.error('Logout error:', error);
+                    showToast('登出失敗');
+                }
+            }
+        }
+
+        function initializeApp() {
+            // 監聽資料變化
+            onValue(feedingsRef, (snapshot) => {
+                allFeedings = snapshot.val() || {};
+                updateDisplay();
+                
+                const indicator = document.getElementById('syncIndicator');
+                indicator.style.animation = 'none';
+                setTimeout(() => {
+                    indicator.style.animation = 'blink 2s infinite';
+                }, 10);
+            });
+
+            // 表單提交
+            document.getElementById('feedingForm').addEventListener('submit', async function(e) {
+                e.preventDefault();
+                
+                const dryFood = parseFloat(document.getElementById('dryFood').value) || 0;
+                const wetFood = parseFloat(document.getElementById('wetFood').value) || 0;
+                
+                if (dryFood === 0 && wetFood === 0) {
+                    showToast('請至少輸入一項食物份量');
+                    return;
+                }
+
+                if (dryFood > 50 || wetFood > 20) {
+                    showToast('輸入數值異常，請確認！');
+                    return;
+                }
+
+                try {
+                    await addFeeding(dryFood, wetFood);
+                    
+                    document.getElementById('dryFood').value = '';
+                    document.getElementById('wetFood').value = '0';
+                    
+                    showToast('記錄成功！');
+                } catch (error) {
+                    console.error('Error adding feeding:', error);
+                    showToast('記錄失敗，請稍後再試');
+                }
+            });
+        }
 
         async function addFeeding(dryFood, wetFood) {
             const now = new Date();
             const dateStr = getDateString(now);
             const timeStr = now.toLocaleTimeString('zh-TW', { hour: '2-digit', minute: '2-digit' });
+            const userName = currentUser.email.split('@')[0];
             
             const newFeedingRef = push(ref(database, `feedings/${dateStr}`));
             await set(newFeedingRef, {
@@ -421,7 +627,8 @@
                 timestamp: now.getTime(),
                 dryFood: dryFood,
                 wetFood: wetFood,
-                total: dryFood + wetFood
+                total: dryFood + wetFood,
+                user: userName
             });
         }
 
@@ -449,7 +656,6 @@
         function updateHistory() {
             const historyList = document.getElementById('historyList');
             
-            // 獲取近七天的日期
             const dates = [];
             for (let i = 0; i < 7; i++) {
                 const date = new Date();
@@ -457,7 +663,6 @@
                 dates.push(getDateString(date));
             }
             
-            // 檢查是否有資料
             const hasData = dates.some(date => allFeedings[date] && Object.keys(allFeedings[date]).length > 0);
             
             if (!hasData) {
@@ -470,7 +675,6 @@
                 const dayData = allFeedings[dateStr];
                 if (!dayData || Object.keys(dayData).length === 0) return;
                 
-                // 轉換成陣列並按時間排序
                 const feedingArray = Object.entries(dayData).map(([key, value]) => ({
                     key,
                     ...value
@@ -492,7 +696,8 @@
                     const parts = [];
                     if (item.dryFood > 0) parts.push(`飼料${item.dryFood}克`);
                     if (item.wetFood > 0) parts.push(`罐頭${item.wetFood}克`);
-                    html += `<div class="feeding-item">${item.time} - ${parts.join('、')}</div>`;
+                    const userDisplay = item.user ? ` - ${item.user}` : '';
+                    html += `<div class="feeding-item">${item.time} - ${parts.join('、')}${userDisplay}</div>`;
                 });
                 
                 html += `
@@ -505,6 +710,20 @@
         }
 
         async function clearAllData() {
+            // 將管理員密碼從16進位轉回文字
+            const adminPassword = hexToString(ADMIN_HASH);
+            
+            const userInput = prompt('⚠️ 此操作無法復原！\n\n請輸入管理員密碼：');
+            
+            if (userInput === null) {
+                return;
+            }
+            
+            if (userInput !== adminPassword) {
+                alert('❌ 管理員密碼錯誤！');
+                return;
+            }
+            
             if (confirm('確定要清除所有餵食記錄嗎？此動作無法復原！')) {
                 try {
                     await remove(feedingsRef);
@@ -515,9 +734,16 @@
                 }
             }
         }
+        
+        function hexToString(hex) {
+            let str = '';
+            for (let i = 0; i < hex.length; i += 2) {
+                str += String.fromCharCode(parseInt(hex.substr(i, 2), 16));
+            }
+            return str;
+        }
 
         function getDateString(date) {
-            // 使用本地時區
             const year = date.getFullYear();
             const month = String(date.getMonth() + 1).padStart(2, '0');
             const day = String(date.getDate()).padStart(2, '0');
@@ -553,8 +779,21 @@
             }, 2000);
         }
 
-        // 將 clearAllData 設為全域函數
         window.clearAllData = clearAllData;
+        window.logout = logout;
+        
+        // 註冊 Service Worker（PWA 支援）
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', () => {
+                navigator.serviceWorker.register('/service-worker.js')
+                    .then(registration => {
+                        console.log('Service Worker 註冊成功:', registration);
+                    })
+                    .catch(error => {
+                        console.log('Service Worker 註冊失敗:', error);
+                    });
+            });
+        }
     </script>
 </body>
 </html>
