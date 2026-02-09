@@ -2,7 +2,7 @@
   "name": "小卷餵食記錄",
   "short_name": "小卷餵食",
   "description": "記錄小卷每天的飲食狀況",
-  "start_url": "/",
+  "start_url": "./",
   "display": "standalone",
   "background_color": "#667eea",
   "theme_color": "#667eea",
