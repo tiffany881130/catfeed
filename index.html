@@ -556,7 +556,7 @@
             const userName = userEmail.split('@')[0]; // 取 @ 前面的部分
             document.getElementById('userInfo').textContent = `👤 ${userName}`;
             
-            initializeApp();
+            initializeFeedingApp(); 
         }
 
         async function logout() {
@@ -571,7 +571,7 @@
             }
         }
 
-        function initializeApp() {
+        function initializeFeedingApp() {
             // 監聽資料變化
             onValue(feedingsRef, (snapshot) => {
                 allFeedings = snapshot.val() || {};
